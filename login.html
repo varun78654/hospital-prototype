@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>CareJR Login</title>
+
+<style>
+
+body{
+margin:0;
+font-family:Arial;
+background:linear-gradient(135deg,#0f9d58,#34a853);
+color:white;
+}
+
+/* HEADER */
+.header{
+display:flex;
+justify-content:space-between;
+padding:15px 30px;
+font-size:22px;
+font-weight:bold;
+}
+
+.plus{
+font-size:28px;
+}
+
+/* CONTAINER */
+.container{
+display:flex;
+justify-content:center;
+align-items:center;
+height:80vh;
+}
+
+/* LOGIN BOX */
+.login-box{
+background:white;
+color:black;
+padding:30px;
+border-radius:15px;
+width:320px;
+box-shadow:0 10px 25px rgba(0,0,0,0.3);
+text-align:center;
+}
+
+.login-box h2{
+color:#0f9d58;
+}
+
+input,select{
+width:90%;
+padding:10px;
+margin:10px 0;
+border-radius:6px;
+border:1px solid #ccc;
+}
+
+/* BUTTON */
+button{
+padding:10px 20px;
+border:none;
+border-radius:6px;
+background:#0f9d58;
+color:white;
+cursor:pointer;
+margin-top:10px;
+}
+
+button:hover{
+background:#0c7c45;
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- HEADER -->
+<div class="header">
+<div class="plus">➕❤️</div>
+<div>CareJR Hospital Login</div>
+<div class="plus">❤️➕</div>
+</div>
+
+<!-- LOGIN -->
+<div class="container">
+
+<div class="login-box">
+
+<h2>OTP Login</h2>
+
+<input id="phone" placeholder="Enter Phone Number">
+
+<select id="role">
+<option value="">Select Position</option>
+<option value="doctor">Doctor</option>
+<option value="patient">Patient</option>
+<option value="nurse">Nurse</option>
+<option value="lab">Lab</option>
+</select>
+
+<button onclick="sendOTP()">Send OTP</button>
+
+<input id="otp" placeholder="Enter OTP">
+
+<button onclick="verifyOTP()">Verify & Login</button>
+
+</div>
+
+</div>
+
+<script>
+
+/* OTP SYSTEM */
+let generatedOTP=""
+
+function sendOTP(){
+
+let phone=document.getElementById("phone").value
+let role=document.getElementById("role").value
+localStorage.setItem("userPhone", phone)
+if(phone.length<10 || role==""){
+alert("Enter valid phone and select role")
+return
+}
+
+generatedOTP=Math.floor(1000 + Math.random()*9000)
+
+alert("Your OTP is: " + generatedOTP) // demo only
+
+}
+
+function verifyOTP(){
+
+let userOTP=document.getElementById("otp").value
+let role=document.getElementById("role").value
+
+if(userOTP==generatedOTP){
+
+alert("Login Successful")
+
+/* REDIRECTION BASED ON ROLE */
+
+if(role=="doctor"){
+window.location.href="details.html"
+}
+else if(role=="patient"){
+window.location.href="patientdetails.html"
+}
+else if(role=="nurse"){
+window.location.href="nursedetails.html"
+}
+else if(role=="lab"){
+window.location.href="labdetails.html"
+}
+
+}else{
+alert("Invalid OTP")
+}
+
+}
+
+</script>
+
+</body>
+</html>

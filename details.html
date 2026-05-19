@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Patient Details</title>
+
+<style>
+
+body{
+margin:0;
+font-family:Arial;
+background:linear-gradient(135deg,#0f9d58,#34a853);
+overflow:hidden;
+}
+
+/* SLIDE ANIMATION */
+.main{
+position:relative;
+animation:slideUp 0.8s ease forwards;
+transform:translateY(100%);
+}
+
+@keyframes slideUp{
+to{transform:translateY(0);}
+}
+
+/* TOP PLUS SIGNS */
+.top{
+position:absolute;
+top:10px;
+width:100%;
+display:flex;
+justify-content:space-between;
+padding:0 25px;
+z-index:2;
+}
+
+.plus{
+font-size:40px;
+color:red;
+}
+
+/* LAYOUT */
+.container{
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
+gap:30px;
+}
+
+/* CAMERA */
+video{
+width:220px;
+border-radius:10px;
+border:3px solid white;
+}
+
+/* FORM */
+.box{
+background:white;
+padding:25px;
+border-radius:15px;
+width:350px;
+box-shadow:0 10px 25px rgba(0,0,0,0.3);
+text-align:center;
+}
+
+.box h2{
+color:#0f9d58;
+}
+
+input,select{
+width:90%;
+padding:10px;
+margin:8px 0;
+border-radius:6px;
+border:1px solid #ccc;
+}
+
+button{
+padding:10px 20px;
+border:none;
+border-radius:6px;
+background:#0f9d58;
+color:white;
+cursor:pointer;
+margin-top:10px;
+}
+
+button:hover{
+background:#0c7c45;
+}
+
+.status{
+margin-top:8px;
+font-size:14px;
+color:green;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="main">
+
+<!-- PLUS SIGNS -->
+<div class="top">
+<div class="plus">➕</div>
+<div class="plus">➕</div>
+</div>
+
+<div class="container">
+
+<!-- CAMERA -->
+<div>
+<video id="video" autoplay muted></video>
+<div class="status" id="status">Camera Starting...</div>
+</div>
+
+<!-- FORM -->
+<div class="box">
+
+<h2>Patient Details</h2>
+
+<input id="hospital" placeholder="Hospital Name">
+
+<input id="name" placeholder="Full Name">
+<input id="age" placeholder="Age">
+
+<select id="gender">
+<option>Select Gender</option>
+<option>Male</option>
+<option>Female</option>
+<option>Other</option>
+</select>
+
+<input id="city" placeholder="City">
+<input id="contact" placeholder="Contact Number">
+
+<button onclick="saveDetails()">Continue</button>
+
+</div>
+
+</div>
+</div>
+
+<script>
+
+/* CAMERA + AUTO DETECTION */
+
+let video=document.getElementById("video")
+
+navigator.mediaDevices.getUserMedia({video:true})
+.then(stream=>{
+video.srcObject=stream
+
+document.getElementById("status").innerText="Face Detected ✔"
+
+/* AUTO FILL DEMO */
+autoFill()
+
+})
+
+/* AUTO FILL FUNCTION */
+
+function autoFill(){
+
+/* Simulated AI Detection */
+
+setTimeout(()=>{
+
+document.getElementById("name").value="Doctor "
+document.getElementById("age").value="16-30"
+document.getElementById("gender").value="Male"
+
+document.getElementById("status").innerText="Details Auto-Filled ✔"
+
+},2000)
+
+}
+
+/* SAVE & REDIRECT */
+
+function saveDetails(){
+
+let data={
+
+hospital:document.getElementById("hospital").value,
+name:document.getElementById("name").value,
+age:document.getElementById("age").value,
+gender:document.getElementById("gender").value,
+city:document.getElementById("city").value,
+contact:document.getElementById("contact").value
+
+}
+
+localStorage.setItem("patientDetails",JSON.stringify(data))
+
+alert("Details Saved")
+
+/* REDIRECT TO DASHBOARD */
+window.location.href="dashboard.html"
+
+}
+
+</script>
+
+</body>
+</html>

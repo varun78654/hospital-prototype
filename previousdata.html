@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Previous Reports</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+
+body{
+margin:0;
+padding:20px;
+font-family:Arial;
+background:linear-gradient(135deg,#e8f5e9,#ffffff);
+}
+
+h2{
+color:#0f9d58;
+text-align:center;
+}
+
+.report{
+background:white;
+padding:18px;
+margin:15px auto;
+max-width:600px;
+border-left:6px solid #0f9d58;
+border-radius:10px;
+box-shadow:0 8px 20px rgba(0,0,0,0.1);
+animation:fade 0.4s ease;
+}
+
+.report h3{
+margin:0;
+color:#0f9d58;
+}
+
+.report p{
+margin:6px 0;
+}
+
+button{
+padding:8px 14px;
+margin-right:8px;
+border:none;
+border-radius:6px;
+cursor:pointer;
+transition:0.3s;
+}
+
+.delete-btn{
+background:#d9534f;
+color:white;
+}
+
+.pdf-btn{
+background:#0f9d58;
+color:white;
+}
+
+button:hover{
+transform:scale(1.05);
+}
+
+.no-report{
+background:white;
+padding:20px;
+text-align:center;
+border-radius:6px;
+}
+
+@keyframes fade{
+from{opacity:0; transform:translateY(15px);}
+to{opacity:1;}
+}
+
+</style>
+</head>
+
+<body>
+
+<h2>Previous Medical Reports</h2>
+
+<div id="reportContainer"></div>
+
+<script>
+
+/* LOAD REPORTS */
+
+function loadReports(){
+
+const container=document.getElementById("reportContainer")
+const reports=JSON.parse(localStorage.getItem("reports"))||[]
+
+container.innerHTML=""
+
+if(reports.length===0){
+container.innerHTML='<div class="no-report">No Reports Available</div>'
+return
+}
+
+reports.forEach((report,index)=>{
+
+const div=document.createElement("div")
+div.className="report"
+
+div.innerHTML=`
+
+<h3>${report.name || "Patient"} (Report ${index+1})</h3>
+
+<p><b>Date:</b> ${report.date || "-"}</p>
+<p><b>Symptoms:</b> ${report.symptoms || "-"}</p>
+<p><b>Medicines:</b> ${report.medicines || "-"}</p>
+<p><b>Tests:</b> ${report.tests || "-"}</p>
+<p><b>Doctor:</b> ${report.doctor || "-"}</p>
+
+<br>
+
+<button class="pdf-btn" onclick="downloadPDF(${index})">Download PDF</button>
+<button class="delete-btn" onclick="deleteReport(${index})">Delete</button>
+
+`
+
+container.appendChild(div)
+
+})
+
+}
+
+/* DELETE */
+
+function deleteReport(index){
+
+let reports=JSON.parse(localStorage.getItem("reports"))||[]
+
+if(confirm("Delete this report?")){
+reports.splice(index,1)
+localStorage.setItem("reports",JSON.stringify(reports))
+loadReports()
+}
+
+}
+
+/* PDF GENERATION */
+
+function downloadPDF(index){
+
+const { jsPDF } = window.jspdf
+const reports=JSON.parse(localStorage.getItem("reports"))||[]
+const r=reports[index]
+
+const doc=new jsPDF()
+
+doc.setFontSize(18)
+doc.text("CareJR Medical Report", 60, 15)
+
+doc.setFontSize(12)
+
+doc.text("Patient Name: " + (r.name || "-"), 10, 30)
+doc.text("Date: " + (r.date || "-"), 10, 40)
+doc.text("Symptoms: " + (r.symptoms || "-"), 10, 50)
+doc.text("Medicines: " + (r.medicines || "-"), 10, 60)
+doc.text("Tests: " + (r.tests || "-"), 10, 70)
+doc.text("Doctor: " + (r.doctor || "-"), 10, 80)
+
+doc.text("Signature: ____________", 10, 100)
+
+doc.save("Report_" + (r.name || index+1) + ".pdf")
+
+}
+
+/* INIT */
+
+loadReports()
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>CareJR AI Screening</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+
+body{
+margin:0;
+font-family:Arial;
+background:linear-gradient(135deg,#0f9d58,#34a853);
+overflow:hidden;
+}
+
+.container{
+display:flex;
+height:100vh;
+}
+
+/* LEFT PANEL */
+
+.left{
+width:30%;
+background:#0b7d45;
+color:white;
+padding:20px;
+box-sizing:border-box;
+overflow:auto;
+}
+
+.left h2{
+text-align:center;
+margin-bottom:20px;
+}
+
+video{
+width:100%;
+border-radius:15px;
+border:4px solid white;
+box-shadow:0 0 20px rgba(255,255,255,0.3);
+}
+
+.status{
+background:rgba(255,255,255,0.2);
+padding:10px;
+margin-top:10px;
+border-radius:10px;
+font-size:15px;
+}
+
+/* RIGHT PANEL */
+
+.right{
+width:70%;
+background:white;
+padding:25px;
+border-radius:30px 0 0 30px;
+overflow:auto;
+box-sizing:border-box;
+}
+
+.right h2{
+color:#0f9d58;
+margin-bottom:20px;
+}
+
+input, textarea{
+width:100%;
+padding:12px;
+margin:10px 0;
+border-radius:10px;
+border:1px solid #ccc;
+font-size:15px;
+box-sizing:border-box;
+transition:0.3s;
+}
+
+input:focus, textarea:focus{
+outline:none;
+border-color:#0f9d58;
+box-shadow:0 0 10px rgba(15,157,88,0.3);
+}
+
+textarea{
+min-height:90px;
+resize:vertical;
+}
+
+button{
+padding:12px 18px;
+margin:8px 5px 8px 0;
+border:none;
+border-radius:10px;
+cursor:pointer;
+font-size:14px;
+transition:0.3s;
+color:white;
+}
+
+button:hover{
+transform:scale(1.05);
+}
+
+.voice{
+background:#ff9800;
+}
+
+.stop{
+background:#d9534f;
+}
+
+.generate{
+background:#0f9d58;
+}
+
+.lab{
+background:#3f51b5;
+}
+
+.pharmacy{
+background:#8e24aa;
+}
+
+.preview{
+background:#f4f4f4;
+padding:15px;
+margin-top:20px;
+border-radius:12px;
+box-shadow:0 0 10px rgba(0,0,0,0.1);
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<!-- LEFT SIDE -->
+
+<div class="left">
+
+<h2>CareJR AI Monitoring</h2>
+
+<video id="video" autoplay muted></video>
+
+<div class="status">
+Breathing Status:
+<span id="breathing">Idle</span>
+</div>
+
+<div class="status">
+Pulse Status:
+<span id="heart">Idle</span>
+</div>
+
+</div>
+
+<!-- RIGHT SIDE -->
+
+<div class="right">
+
+<h2>Patient Entry</h2>
+
+<input id="patientName" placeholder="Patient Name">
+
+<input type="date" id="visitDate">
+
+<textarea id="conversation" placeholder="Doctor Patient Conversation"></textarea>
+
+<button class="voice" onclick="startConversation()">
+🎤 Start Conversation
+</button>
+
+<button class="stop" onclick="stopConversation()">
+⛔ Stop Conversation
+</button>
+
+<textarea id="symptoms" placeholder="Detected Symptoms"></textarea>
+
+<textarea id="medicines" placeholder="Suggested Medicines"></textarea>
+
+<textarea id="dosage" placeholder="How To Take Medicines"></textarea>
+
+<textarea id="tests" placeholder="Suggested Lab Tests"></textarea>
+
+<textarea id="exercise" placeholder="Suggested Exercises"></textarea>
+
+<input id="doctor" placeholder="Doctor Signature">
+
+<h3>
+Risk Score:
+<span id="risk">0</span>%
+</h3>
+
+<button class="generate" onclick="generateReport()">
+📄 Generate Report
+</button>
+
+<button class="pharmacy" onclick="sendPharmacy()">
+💊 Move To Pharmacy
+</button>
+
+<button class="lab" onclick="sendLab()">
+🧪 Move To Laboratory
+</button>
+
+<div id="after" style="display:none">
+
+<button class="generate" onclick="downloadPDF()">
+⬇ Download PDF
+</button>
+
+<button class="generate" onclick="storeReport()">
+💾 Approve & Store
+</button>
+
+</div>
+
+<div id="preview" class="preview"></div>
+
+</div>
+</div>
+
+<script>
+
+/* GLOBALS */
+
+let recognition
+let cameraStream
+let breathInterval
+let pulseInterval
+
+const video = document.getElementById("video")
+
+/* START */
+
+function startConversation(){
+
+startCamera()
+startVoice()
+startBreathing()
+startPulse()
+
+}
+
+/* STOP */
+
+function stopConversation(){
+
+if(recognition){
+recognition.stop()
+}
+
+if(cameraStream){
+cameraStream.getTracks().forEach(track=>track.stop())
+}
+
+clearInterval(breathInterval)
+clearInterval(pulseInterval)
+
+/* FINAL ANALYSIS */
+runAI()
+
+alert("Conversation Stopped & Updated")
+
+}
+
+/* CAMERA */
+
+async function startCamera(){
+
+cameraStream = await navigator.mediaDevices.getUserMedia({
+video:true,
+audio:true
+})
+
+video.srcObject = cameraStream
+
+}
+
+/* VOICE TO TEXT */
+
+function startVoice(){
+
+if(!('webkitSpeechRecognition' in window)){
+alert("Use Google Chrome")
+return
+}
+
+recognition = new webkitSpeechRecognition()
+
+recognition.continuous = true
+recognition.interimResults = true
+recognition.lang = "en-IN"
+
+recognition.start()
+
+recognition.onresult = function(event){
+
+let transcript = ""
+
+for(let i=0;i<event.results.length;i++){
+
+transcript += event.results[i][0].transcript + " "
+
+}
+
+/* FULL CONVERSATION */
+conversation.value = transcript
+
+/* AI ANALYSIS */
+runAI()
+
+}
+
+}
+
+/* BREATHING */
+
+let breathCount=0
+
+function startBreathing(){
+
+breathInterval=setInterval(()=>{
+
+breathCount++
+
+let bpm=breathCount*2
+
+if(bpm<10)
+breathing.innerText=bpm+" BPM (Bad)"
+
+else if(bpm<16)
+breathing.innerText=bpm+" BPM (Normal)"
+
+else if(bpm<20)
+breathing.innerText=bpm+" BPM (Good)"
+
+else
+breathing.innerText=bpm+" BPM (Emergency)"
+
+},3000)
+
+}
+
+/* HEART */
+
+let pulse=60
+
+function startPulse(){
+
+pulseInterval=setInterval(()=>{
+
+pulse=60+Math.floor(Math.random()*40)
+
+if(pulse<60)
+heart.innerText=pulse+" BPM (Bad)"
+
+else if(pulse<80)
+heart.innerText=pulse+" BPM (Normal)"
+
+else if(pulse<100)
+heart.innerText=pulse+" BPM (Good)"
+
+else
+heart.innerText=pulse+" BPM (Emergency)"
+
+},2000)
+
+}
+
+/* AI ANALYSIS */
+
+function analyze(text){
+
+text=text.toLowerCase()
+
+const db={
+
+fever:{
+medicine:"Paracetamol",
+dosage:"1 tablet after meal twice daily",
+test:"Blood Test",
+exercise:"Drink water and take proper rest",
+risk:20
+},
+
+cough:{
+medicine:"Cough Syrup",
+dosage:"2 spoons three times daily",
+test:"Chest X-ray",
+exercise:"Steam inhalation twice daily",
+risk:15
+},
+
+cold:{
+medicine:"Cetirizine",
+dosage:"1 tablet at night",
+test:"CBC",
+exercise:"Warm fluids and rest",
+risk:10
+},
+
+headache:{
+medicine:"Ibuprofen",
+dosage:"1 tablet after food",
+test:"CT Scan",
+exercise:"Reduce screen time and proper sleep",
+risk:10
+},
+
+vomiting:{
+medicine:"ORS",
+dosage:"Drink after every vomiting episode",
+test:"Stool Test",
+exercise:"Light food and hydration",
+risk:15
+},
+
+weakness:{
+medicine:"Multivitamin",
+dosage:"1 capsule daily",
+test:"Vitamin Test",
+exercise:"Balanced diet and walking",
+risk:10
+},
+
+chest:{
+medicine:"Aspirin",
+dosage:"As prescribed by doctor",
+test:"ECG",
+exercise:"Avoid stress and heavy activity",
+risk:30
+}
+
+}
+
+let symptoms=[]
+let medicines=[]
+let dosage=[]
+let tests=[]
+let exercise=[]
+let risk=0
+
+for(let key in db){
+
+if(text.includes(key)){
+
+symptoms.push(key)
+medicines.push(db[key].medicine)
+dosage.push(db[key].dosage)
+tests.push(db[key].test)
+exercise.push(db[key].exercise)
+
+risk += db[key].risk
+
+}
+
+}
+
+risk=Math.min(risk,100)
+
+return{
+
+symptoms:[...new Set(symptoms)].join(", "),
+medicines:[...new Set(medicines)].join(", "),
+dosage:[...new Set(dosage)].join(" | "),
+tests:[...new Set(tests)].join(", "),
+exercise:[...new Set(exercise)].join(" | "),
+risk:risk
+
+}
+
+}
+
+/* RUN AI */
+
+function runAI(){
+
+let text = conversation.value
+
+let r = analyze(text)
+
+symptoms.value = r.symptoms
+medicines.value = r.medicines
+dosage.value = r.dosage
+tests.value = r.tests
+exercise.value = r.exercise
+risk.innerText = r.risk
+
+}
+
+/* REPORT */
+
+function generateReport(){
+
+let report={
+
+name:patientName.value,
+date:visitDate.value,
+conversation:conversation.value,
+symptoms:symptoms.value,
+medicines:medicines.value,
+dosage:dosage.value,
+tests:tests.value,
+exercise:exercise.value,
+risk:risk.innerText,
+doctor:doctor.value
+
+}
+
+localStorage.setItem(
+"currentReport",
+JSON.stringify(report)
+)
+
+preview.innerHTML=`
+
+<h3>Medical Report Preview</h3>
+
+<p><b>Patient:</b> ${report.name}</p>
+
+<p><b>Conversation:</b><br>
+${report.conversation}</p>
+
+<p><b>Symptoms:</b>
+${report.symptoms}</p>
+
+<p><b>Medicines:</b>
+${report.medicines}</p>
+
+<p><b>Dosage:</b>
+${report.dosage}</p>
+
+<p><b>Tests:</b>
+${report.tests}</p>
+
+<p><b>Exercises:</b>
+${report.exercise}</p>
+
+<p><b>Risk Score:</b>
+${report.risk}%</p>
+
+`
+
+after.style.display="block"
+
+}
+
+/* STORE */
+
+function storeReport(){
+
+let reports=
+JSON.parse(localStorage.getItem("reports")) || []
+
+let current=
+JSON.parse(localStorage.getItem("currentReport"))
+
+reports.push(current)
+
+localStorage.setItem(
+"reports",
+JSON.stringify(reports)
+)
+
+alert("Report Stored Successfully")
+
+}
+
+/* PDF */
+
+function downloadPDF(){
+
+const {jsPDF}=window.jspdf
+
+let d=
+JSON.parse(localStorage.getItem("currentReport"))
+
+let doc=new jsPDF()
+
+doc.text("CAREJR AI MEDICAL REPORT",20,20)
+
+doc.text("Patient: "+d.name,20,40)
+
+doc.text("Conversation:",20,50)
+
+doc.text(doc.splitTextToSize(d.conversation,170),20,60)
+
+doc.text("Symptoms: "+d.symptoms,20,100)
+
+doc.text("Medicines: "+d.medicines,20,110)
+
+doc.text("Dosage: "+d.dosage,20,120)
+
+doc.text("Tests: "+d.tests,20,130)
+
+doc.text("Exercise: "+d.exercise,20,140)
+
+doc.text("Risk Score: "+d.risk+"%",20,150)
+
+doc.text("Doctor: "+d.doctor,20,160)
+
+doc.save(d.name+"_report.pdf")
+
+}
+
+/* WORKFLOW */
+
+function sendPharmacy(){
+alert("Patient report sent to Pharmacy")
+}
+
+function sendLab(){
+alert("Patient report sent to Laboratory")
+}
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Patient Dashboard</title>
+
+<style>
+
+/* BODY */
+body{
+margin:0;
+font-family:'Segoe UI',sans-serif;
+background:#eef5f1;
+}
+
+/* HEADER */
+.header{
+background:#0f9d58;
+color:white;
+padding:15px 20px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+
+/* SIDEBAR */
+.sidebar{
+position:fixed;
+top:0;
+left:-250px;
+width:250px;
+height:100%;
+background:#0f9d58;
+padding-top:60px;
+transition:0.4s;
+z-index:100;
+}
+
+.sidebar a{
+display:block;
+padding:15px;
+color:white;
+text-decoration:none;
+}
+
+.sidebar a:hover{
+background:#0c7c45;
+}
+
+.sidebar.active{
+left:0;
+}
+
+/* MENU ICON */
+.menu-icon{
+font-size:24px;
+cursor:pointer;
+}
+
+/* OVERLAY */
+.overlay{
+position:fixed;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.3);
+display:none;
+}
+
+.overlay.active{
+display:block;
+}
+
+/* TOP CARD */
+.top-card{
+background:white;
+margin:20px;
+padding:20px;
+border-radius:12px;
+box-shadow:0 8px 20px rgba(0,0,0,0.2);
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+
+/* HOSPITAL */
+.hospital{
+color:#0f9d58;
+font-size:26px;
+font-weight:bold;
+text-shadow:2px 2px 6px rgba(0,0,0,0.3);
+}
+
+/* PATIENT INFO */
+.patient{
+background:#fff;
+padding:15px;
+border-radius:10px;
+box-shadow:0 5px 15px rgba(0,0,0,0.2);
+}
+
+/* GRID */
+.grid{
+display:flex;
+flex-wrap:wrap;
+justify-content:center;
+gap:20px;
+padding:20px;
+}
+
+/* CARD */
+.card{
+width:220px;
+height:160px; /* add height */
+background:white;
+border-radius:12px;
+padding:15px;
+display:flex;
+align-items:flex-end;   /* pushes text to bottom */
+justify-content:center;
+text-align:center;
+box-shadow:0 5px 15px rgba(0,0,0,0.2);
+transition:0.4s;
+cursor:pointer;
+}
+/* HOVER */
+.card:hover{
+transform:translateY(-10px) scale(1.05);
+border:2px solid #0f9d58;
+}
+
+/* SECTION */
+.section-title{
+text-align:center;
+font-size:22px;
+color:#0f9d58;
+margin-top:20px;
+}
+
+/* DOCTOR CARD */
+.doc-card{
+width:250px;
+background:white;
+border-radius:12px;
+padding:15px;
+box-shadow:0 5px 15px rgba(0,0,0,0.2);
+transition:0.4s;
+}
+
+.doc-card:hover{
+transform:translateY(-10px);
+border:2px solid #0f9d58;
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- OVERLAY -->
+<div class="overlay" id="overlay" onclick="toggleMenu()"></div>
+
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+<a href="#">🏥 Home</a>
+<a href="#">📂 My Reports</a>
+<a href="#">💊 Pharmacy</a>
+<a href="#">🚨 Emergency</a>
+</div>
+
+<!-- HEADER -->
+<div class="header">
+<div class="menu-icon" onclick="toggleMenu()">☰</div>
+<div><b>CareJR Patient Dashboard</b></div>
+<div>❤️ Care</div>
+</div>
+
+<!-- TOP INFO -->
+<div class="top-card">
+
+<div class="patient">
+<h3 id="name"></h3>
+<p id="age"></p>
+<p id="gender"></p>
+</div>
+
+<div class="hospital" id="hospital"></div>
+
+</div>
+
+<!-- SERVICES -->
+<div class="section-title">Hospital Services</div>
+
+<div class="grid">
+
+<div class="card">ECG Service</div>
+<div class="card">Blood Tests</div>
+<div class="card">Radiology</div>
+<div class="card">My Reports</div>
+
+</div>
+
+<!-- DOCTORS -->
+<div class="section-title">Consult Doctors</div>
+
+<div class="grid">
+
+<div class="doc-card">
+<p><b>Dr. Meena</b></p>
+<p>Pathologist</p>
+<p>10+ Years Experience</p>
+</div>
+
+<div class="doc-card">
+<p><b>Dr. Abhishek</b></p>
+<p>Gastrologist</p>
+<p>8+ Years Experience</p>
+</div>
+
+<div class="doc-card">
+<p><b>Dr. Shashi</b></p>
+<p>Neurologist</p>
+<p>12+ Years Experience</p>
+</div>
+
+<div class="doc-card">
+<p><b>Dr. Sharma</b></p>
+<p>Consultant</p>
+<p>15+ Years Experience</p>
+</div>
+
+<div class="doc-card">
+<p><b>Dr. Divansh</b></p>
+<p>Surgeon</p>
+<p>9+ Years Experience</p>
+</div>
+
+</div>
+
+<script>
+
+/* LOAD DATA */
+
+let data = JSON.parse(localStorage.getItem("patientDetails"))
+
+if(data){
+
+document.getElementById("name").innerText="Hi, " + data.name
+document.getElementById("hospital").innerText=data.hospital
+
+}
+
+/* OPTIONAL STATIC */
+document.getElementById("age").innerText="Age: 25"
+document.getElementById("gender").innerText="Gender: Male"
+
+/* MENU */
+function toggleMenu(){
+
+document.getElementById("sidebar").classList.toggle("active")
+document.getElementById("overlay").classList.toggle("active")
+
+}
+
+</script>
+
+</body>
+</html>
